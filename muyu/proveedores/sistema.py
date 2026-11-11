@@ -313,8 +313,12 @@ def preparar(s: dict, params: dict, archivos: list[str]) -> dict:
         return sh("ss -tulnp 2>/dev/null", resultado="informe")
     # --- ISO
     if op == "iso_montar":
-        return sh(f"udisksctl loop-setup -r -f {_q(p)} 2>&1 && sleep 1 && lsblk -o NAME,MOUNTPOINT | grep -A3 \"$(losetup -j {_q(p)} | cut -d: -f1 | head -1 | xargs basename)\"",
-                  resultado="informe")
+        # udisksctl conecta la imagen a un dispositivo de bucle; no siempre la monta sola: se monta y se dice dónde
+        return sh(f"d=$(udisksctl loop-setup -r -f {_q(p)} 2>&1 | sed -n 's|.* as \\(/dev/loop[0-9]*\\)\\.$|\\1|p'); "
+                  "[ -n \"$d\" ] || { echo 'No se pudo conectar la imagen.'; exit 1; }; sleep 1; "
+                  "udisksctl mount -b \"$d\" >/dev/null 2>&1; m=$(lsblk -no MOUNTPOINT \"$d\" | head -1); "
+                  "[ -n \"$m\" ] || { echo \"Conectada en $d, pero no se pudo montar.\"; exit 1; }; "
+                  "echo \"Dispositivo: $d\"; echo \"Montada en: $m\"", resultado="informe")
     if op == "iso_desmontar":
         return sh(f"for d in $(losetup -j {_q(p)} | cut -d: -f1); do udisksctl unmount -b $d 2>/dev/null; udisksctl loop-delete -b $d && echo \"Suelta: $d\"; done",
                   resultado="informe")

@@ -43,29 +43,47 @@ def tipo_vista(ruta: str) -> str:
 
 def documentos_okular() -> list[dict]:
     """Lo que cada Okular abierto está mostrando (D-Bus: org.kde.okular-<pid>, /okular): [{ruta, nombre, pagina}].
-    Vacío sin Okular o sin QtDBus."""
+    Llamadas directas con un tope de 0,8 s (sin la introspección de QDBusInterface, que puede bloquear 25 s si un
+    Okular no responde): la rueda lo pide cada vez que aparece. Vacío sin Okular o sin QtDBus."""
     try:
-        from PySide6.QtDBus import QDBusConnection, QDBusInterface
+        from PySide6.QtDBus import QDBus, QDBusConnection, QDBusMessage
     except ImportError:
         return []
     bus = QDBusConnection.sessionBus()
     if not bus.isConnected():
         return []
+
+    def llamar(servicio: str, metodo: str):
+        respuesta = bus.call(QDBusMessage.createMethodCall(servicio, "/okular", "org.kde.okular", metodo), QDBus.CallMode.Block, 800)
+        argumentos = respuesta.arguments() if respuesta.type() == QDBusMessage.MessageType.ReplyMessage else []
+        return argumentos[0] if argumentos else None
+
     salida = []
     for servicio in bus.interface().registeredServiceNames().value() or []:
         if not servicio.startswith("org.kde.okular-"):
             continue
-        okular = QDBusInterface(servicio, "/okular", "org.kde.okular", bus)
-        okular.setTimeout(800)
-        documento = okular.call("currentDocument").arguments()
-        pagina = okular.call("currentPage").arguments()
-        ruta = str(documento[0]) if documento else ""
+        ruta = str(llamar(servicio, "currentDocument") or "")
+        pagina = llamar(servicio, "currentPage")
         if ruta.startswith("file:"):
             ruta = QUrl(ruta).toLocalFile()
         if ruta and Path(ruta).is_file():
-            salida.append({"ruta": ruta, "nombre": Path(ruta).name, "pagina": int(pagina[0]) if pagina else 0,          # Okular cuenta desde 1
+            salida.append({"ruta": ruta, "nombre": Path(ruta).name, "pagina": int(pagina or 0),     # Okular cuenta desde 1
                            "servicio": servicio})
     return salida
+
+
+def lanzar(argv: list[str], cwd: str = "") -> bool:
+    """Una aplicación suelta (abrir con, Dolphin, QEMU, Konsole): sin heredar la salida de Muyu."""
+    from gui_comun.qt import QProcess as P
+    proceso = P()
+    proceso.setProgram(argv[0])
+    proceso.setArguments(argv[1:])
+    if cwd:
+        proceso.setWorkingDirectory(cwd)
+    proceso.setStandardOutputFile(P.nullDevice())
+    proceso.setStandardErrorFile(P.nullDevice())
+    resultado = proceso.startDetached()                  # PySide6 devuelve (ok, pid)
+    return bool(resultado[0] if isinstance(resultado, tuple) else resultado)
 
 
 def cerrar_a_la_izquierda() -> bool:
@@ -322,14 +340,13 @@ class Rueda(QObject):
             self.correr(primera["clave"], {})
 
     def _abrir_con(self, s: dict, archivos: list[str]) -> None:
-        from gui_comun.qt import QProcess as P
         try:
             ordenes = abrir.ordenes_para(s["app"], archivos)
         except LookupError as e:
             self._mensaje = str(e)
             self.cambiada.emit()
             return
-        fallidas = [o for o in ordenes if not P.startDetached(o[0], o[1:])]
+        fallidas = [o for o in ordenes if not lanzar(o)]
         if fallidas:
             self._mensaje = f"No se pudo abrir con {s['etiqueta']} ({fallidas[0][0]})."
             self.cambiada.emit()
@@ -354,17 +371,15 @@ class Rueda(QObject):
             self.cambiada.emit()
             return
         if plan.get("suelto"):                    # una aplicación que se lanza y no se sigue (Dolphin en smb://, QEMU)
-            from gui_comun.qt import QProcess as P
-            ok = P.startDetached(plan["argv"][0], plan["argv"][1:], plan.get("cwd") or "")
+            ok = lanzar(plan["argv"], plan.get("cwd") or "")
             self._mensaje = f"{s['titulo']}: abierto." if ok else f"No se pudo abrir: {plan['argv'][0]}."
             self.cambiada.emit()
             if ok:
                 self.abierto.emit(s["titulo"])
             return
         if plan.get("terminal"):
-            from gui_comun.qt import QProcess as P
-            P.startDetached("konsole", ["--hold", "-e", *plan["argv"]] if plan.get("mantener") else ["-e", *plan["argv"]],
-                            plan.get("cwd") or "")
+            lanzar(["konsole", "--hold", "-e", *plan["argv"]] if plan.get("mantener") else ["konsole", "-e", *plan["argv"]],
+                   plan.get("cwd") or "")
             self._mensaje = f"{s['titulo']}: en Konsole."
             self.cambiada.emit()
             self.abierto.emit(s["titulo"])
@@ -668,18 +683,16 @@ class Rueda(QObject):
     @Slot(str)
     def abrirEnOkular(self, ruta: str) -> None:  # noqa: N802
         """En el Okular abierto (como pestaña nueva si así lo tiene configurado) o en uno nuevo."""
-        from gui_comun.qt import QProcess as P
-        P.startDetached("okular", ["--unique", ruta] if self._okular else [ruta])
+        lanzar(["okular", "--unique", ruta] if self._okular else ["okular", ruta])
 
     @Slot()
     def enviarPorCorreo(self) -> None:  # noqa: N802
         """El resultado (o lo del centro) como adjunto de un correo nuevo, en el programa de correo de la sesión."""
-        from gui_comun.qt import QProcess as P
         archivos = [a for a in (self._resultados or self._archivos) if Path(a).is_file()]
         if not archivos:
             return
         orden = [x for a in archivos for x in ("--attach", a)] + ["--subject", ", ".join(Path(a).name for a in archivos)[:120]]
-        if not P.startDetached("xdg-email", orden):
+        if not lanzar(["xdg-email", *orden]):
             self._mensaje = "No se pudo abrir el programa de correo (xdg-email)."
             self.cambiada.emit()
 
