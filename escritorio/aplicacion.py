@@ -54,6 +54,32 @@ def hay_capa() -> bool:
     return (qml / "org" / "kde" / "layershell" / "qmldir").is_file()
 
 
+PROPIAS = ("QT_WAYLAND_SHELL_INTEGRATION", "GUI_COMUN_DIR", "MUYU_SIN_CAPA", "MUYU_PANEL", "MUYU_ESPERA")
+
+
+def entorno_limpio(entorno: dict[str, str]) -> dict[str, str]:
+    """El entorno de lo que Muyu lanza: sin lo que solo le sirve a Muyu. Con la variable de layer-shell, una aplicación
+    de Qt (Gwenview, Okular…) nacería como capa de superposición: sin marco, sin botones y encima de todo; con la
+    carpeta de Muyu en PYTHONPATH, un programa en Python podría importar sus paquetes en vez de los suyos."""
+    limpio = {k: v for k, v in entorno.items() if k not in PROPIAS}
+    if limpio.get("PYTHONPATH"):
+        partes = [x for x in limpio["PYTHONPATH"].split(os.pathsep) if x and Path(x).resolve() != Path(__file__).resolve().parents[1]]
+        if partes:
+            limpio["PYTHONPATH"] = os.pathsep.join(partes)
+        else:
+            del limpio["PYTHONPATH"]
+    return limpio
+
+
+def limpiar_entorno() -> None:
+    """Quita del entorno de este proceso lo de `entorno_limpio` (los procesos hijos lo heredan)."""
+    limpio = entorno_limpio(dict(os.environ))
+    for clave in [k for k in os.environ if k not in limpio]:
+        del os.environ[clave]
+    if "PYTHONPATH" in limpio:
+        os.environ["PYTHONPATH"] = limpio["PYTHONPATH"]
+
+
 def mandar_a_la_abierta(archivos: list[str], mostrar: bool) -> bool:
     """Si hay una rueda abierta, le pasa los archivos (y que se muestre) y devuelve True."""
     import socket
@@ -92,6 +118,7 @@ def main(argv: list[str]) -> int:
     from muyu import rutas
 
     app = Aplicacion(APP_ID, NOMBRE, organizacion=ORG_NAME, argv=[sys.argv[0]])
+    limpiar_entorno()                 # Qt ya leyó la capa: lo que Muyu lance después nace sin ella
     app.app.setQuitOnLastWindowClosed(False)
     cache = rutas.cache()
     tareas = Tareas(None)

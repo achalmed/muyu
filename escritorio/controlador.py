@@ -78,10 +78,16 @@ def lanzar(argv: list[str], cwd: str = "") -> bool:
     proceso = P()
     proceso.setProgram(argv[0])
     proceso.setArguments(argv[1:])
-    if cwd:
-        proceso.setWorkingDirectory(cwd)
+    proceso.setWorkingDirectory(cwd or str(Path.home()))     # nunca en la carpeta de Muyu
     proceso.setStandardOutputFile(P.nullDevice())
     proceso.setStandardErrorFile(P.nullDevice())
+    from PySide6.QtCore import QProcessEnvironment
+    import os
+    from escritorio.aplicacion import entorno_limpio
+    entorno = QProcessEnvironment()
+    for clave, valor in entorno_limpio(dict(os.environ)).items():   # nunca la capa de Muyu (ventanas sin marco, encima)
+        entorno.insert(clave, valor)
+    proceso.setProcessEnvironment(entorno)
     resultado = proceso.startDetached()                  # PySide6 devuelve (ok, pid)
     return bool(resultado[0] if isinstance(resultado, tuple) else resultado)
 
@@ -346,7 +352,8 @@ class Rueda(QObject):
             self._mensaje = str(e)
             self.cambiada.emit()
             return
-        fallidas = [o for o in ordenes if not lanzar(o)]
+        carpeta = str(Path(archivos[0]).parent) if archivos else ""
+        fallidas = [o for o in ordenes if not lanzar(o, carpeta)]
         if fallidas:
             self._mensaje = f"No se pudo abrir con {s['etiqueta']} ({fallidas[0][0]})."
             self.cambiada.emit()

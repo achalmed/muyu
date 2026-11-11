@@ -238,3 +238,33 @@ def test_abrir_con_y_ordenes_de_un_proveedor(app, rueda, muestra, monkeypatch):
     s = {"proveedor": "abrir", "app": "nada.desktop", "etiqueta": "Nada", "clave": "abrir|nada", "params": {}, "fijos": []}
     r._abrir_con(s, [str(muestra["md"])])
     assert abiertos == ["Nada"] and "Abierto con Nada" in r.mensaje
+
+
+@requiere_binding
+def test_lo_que_muyu_lanza_no_hereda_su_capa(app, tmp_path, monkeypatch):
+    """Con la variable de layer-shell heredada, una aplicación de Qt (Gwenview) nacía como capa de superposición: sin
+    marco, sin botones y encima de todo (lo vio el autor el 2026-11-11). Ni las aplicaciones ni las órdenes la heredan."""
+    import os
+    from escritorio import aplicacion
+    from escritorio.controlador import lanzar
+    repo = str(Path(aplicacion.__file__).resolve().parents[1])
+    monkeypatch.setenv("QT_WAYLAND_SHELL_INTEGRATION", "layer-shell")
+    monkeypatch.setenv("PYTHONPATH", os.pathsep.join([repo, "/otra/carpeta"]))
+    monkeypatch.setenv("MUYU_PRUEBA_SIGUE", "sí")
+    salida = tmp_path / "entorno.txt"
+    assert lanzar(["sh", "-c", f"env > '{salida}'"])
+    for _ in range(100):
+        if salida.exists() and salida.read_text():
+            break
+        time.sleep(0.05)
+    visto = salida.read_text()
+    assert "QT_WAYLAND_SHELL_INTEGRATION" not in visto and "MUYU_PRUEBA_SIGUE=sí" in visto
+    assert "PYTHONPATH=/otra/carpeta\n" in visto
+    assert f"PWD={repo}\n" not in visto                    # tampoco arranca en la carpeta de Muyu
+    antes = dict(os.environ)
+    try:
+        aplicacion.limpiar_entorno()                    # lo que corre como tarea (bash, el corredor) también nace limpio
+        assert "QT_WAYLAND_SHELL_INTEGRATION" not in os.environ and os.environ["PYTHONPATH"] == "/otra/carpeta"
+    finally:                                            # el entorno de pytest, entero (GUI_COMUN_DIR lo usan las demás)
+        os.environ.clear()
+        os.environ.update(antes)
