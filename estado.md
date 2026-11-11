@@ -3,7 +3,7 @@ tipo: estado
 estado: activo
 actualizado: 2026-11-11
 ---
-# estado.md — muyu (privado y sin remoto)
+# estado.md — muyu (público: github.com/achalmed/muyu)
 
 Lo primero que se lee y lo último que se escribe en cada sesión (regla 10 de la guía raíz). Lo pendiente, aquí, en
 §Por hacer, con fecha y dueño.
@@ -12,6 +12,7 @@ Lo primero que se lee y lo último que se escribe en cada sesión (regla 10 de l
 
 | fecha | qué | dónde se ve |
 |---|---|---|
+| 2026-11-11 | **Publicado en GitHub** (M2): público con AGPL-3.0, la guarda del repo público (`scripts/escanear.py`, cada commit escaneado), README con capturas (KWin anidado, archivos de ejemplo) y sección en inglés, temas del repo y la versión 0.1.0. Corregido al hacer las capturas: el recorte medía la foto antes de cargarla (y, reducida a 1600 px, una foto grande se recortaba mal) | `README.md`, `docs/capturas/` |
 | 2026-11-11 | **Varias pantallas** (lo vio el autor: la rueda salía siempre en una): la rueda deja que KWin elija la pantalla cada vez que aparece (`wantsToBeOnActiveScreen`: la activa, la del puntero) y la residente pone una franja en cada pantalla, en el borde que no toca a otro monitor (`pantallas.js`), con el QScreen de verdad que layer-shell necesita (`pantallasQt`; desde QML, `screen` no le llegaba y la capa nacía en la principal). Comprobado en el protocolo Wayland con un KWin anidado de dos salidas: cada franja en la suya y la rueda sin fijar ninguna | `escritorio/qml/SuperposicionCapa.qml`, `escritorio/qml/pantallas.js` |
 | 2026-11-11 | **Lo que el autor vio en la sesión**: una imagen abierta con Gwenview desde la rueda salía sin marco ni botones y encima de todo (no se podía cerrar): heredaba `QT_WAYLAND_SHELL_INTEGRATION=layer-shell` de Muyu y nacía como capa de superposición. Muyu quita de su entorno lo que solo le sirve a él (la capa, su carpeta en PYTHONPATH, GUI_COMUN_DIR) en cuanto crea su ventana, y `lanzar` arma el entorno de cada aplicación sin eso y en la carpeta del archivo; comprobado en un KWin anidado (Gwenview sin la variable); prueba que lo vigila | `escritorio/aplicacion.py` (`entorno_limpio`), `tests/test_escritorio.py` |
 | 2026-11-11 | **La macro de LibreOffice, probada de verdad** (con `libreoffice-script-provider-python`, que el autor instaló): un LibreOffice con perfil aparte carga un documento por UNO, la macro lanza Muyu y la rueda se abre con él. Corregido: con el documento oculto o desde el editor de macros `XSCRIPTCONTEXT.getDocument()` viene vacío; la macro toma el componente actual o el primero abierto con archivo | `muyu/instalar.py` (`contenido_macro`) |
@@ -27,7 +28,6 @@ nada en curso
 - 2026-11-11 · dueño: **el autor** · lo que solo se ve en la sesión real: el doble clic en Dolphin (la rueda bajo el puntero, Intro), Meta+Ctrl+R a mitad de un arrastre tras volver a entrar, la franja del borde, arrastrar el resultado a Dolphin, y lo que necesita el teléfono (Android) o un servidor (SSH, Samba).
 - 2026-11-11 · dueño: director · el anillo interior de una carpeta tiene un solo sector (ZIP): pensar si llevar ahí
   las herramientas más usadas de la carpeta.
-- 2026-11-11 · dueño: director · remoto privado en GitHub (`gh repo create achalmed/muyu --private`), si el autor lo quiere.
 
 ## Futuro
 

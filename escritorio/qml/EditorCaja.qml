@@ -18,13 +18,10 @@ ColumnLayout {
     property real sy: 0.1
     property real sw: 0.8
     property real sh: 0.8
-    readonly property size real: {
-        const s = imagen.sourceSize
-        if (s.width <= 0 || imagen.paintedWidth <= 0)
-            return Qt.size(0, 0)
-        const apaisada = imagen.paintedWidth >= imagen.paintedHeight
-        return (apaisada === (s.width >= s.height)) ? s : Qt.size(s.height, s.width)    // la orientación del EXIF ya aplicada
-    }
+    // el tamaño real en píxeles (ya girada según su EXIF): la imagen se carga entera, sin reducir, para que el
+    // rectángulo salga en las coordenadas del archivo y no en las de una copia (una foto de 4000 px no es una de 1600)
+    readonly property size real: imagen.status === Image.Ready && imagen.implicitWidth > 0
+                                 ? Qt.size(imagen.implicitWidth, imagen.implicitHeight) : Qt.size(0, 0)
     readonly property string caja: real.width > 0
         ? [Math.round(sx * real.width), Math.round(sy * real.height), Math.max(1, Math.round(sw * real.width)), Math.max(1, Math.round(sh * real.height))].join(",")
         : ""
@@ -62,7 +59,6 @@ ColumnLayout {
             fillMode: Image.PreserveAspectFit
             autoTransform: true
             asynchronous: true
-            sourceSize.width: 1600
         }
         // el área pintada de la imagen
         Item {

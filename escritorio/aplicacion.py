@@ -54,7 +54,7 @@ def hay_capa() -> bool:
     return (qml / "org" / "kde" / "layershell" / "qmldir").is_file()
 
 
-PROPIAS = ("QT_WAYLAND_SHELL_INTEGRATION", "GUI_COMUN_DIR", "MUYU_SIN_CAPA", "MUYU_PANEL", "MUYU_ESPERA")
+PROPIAS = ("QT_WAYLAND_SHELL_INTEGRATION", "GUI_COMUN_DIR")      # las MUYU_* no molestan a nadie (y se leen después)
 
 
 def entorno_limpio(entorno: dict[str, str]) -> dict[str, str]:
@@ -176,6 +176,7 @@ def main(argv: list[str]) -> int:
     app.motor.rootContext().setContextProperty("residente", residente)
     app.motor.rootContext().setContextProperty("conCapa", capa)
     app.motor.rootContext().setContextProperty("depurar", bool(os.environ.get("MUYU_DEPURAR")))
+    app.motor.rootContext().setContextProperty("fondoCaptura", bool(os.environ.get("MUYU_FONDO")))   # capturas del README
 
     # las pantallas de verdad (QScreen) para QML: layer-shell las necesita así (Qt.application.screens son envoltorios
     # que no llegan a su propiedad `screen`); se rehacen al conectar o desconectar un monitor

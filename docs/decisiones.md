@@ -24,3 +24,13 @@ Studio y las de KDE-Services (todas menos MEGA), y que cambie de nombre. Decidid
 
 Arquitectura: proveedores (`muyu/proveedores/`) que dicen qué ofrecen y cómo se corre; anillos por páginas; la ventana
 (QML + Kirigami sobre gui-comun, layer-shell en Wayland) no nombra operaciones.
+
+### 2026-11-11 · M2: Muyu se publica; varias pantallas
+
+Encargo del autor: publicarlo en GitHub «para que sea mundial», con capturas y etiquetas. Revisa el punto 1 de M1
+(privado): Muyu es público como Raphi (AGPL-3.0), con su guarda (`scripts/escanear.py`, el escáner de Tiqsi en cada
+envío) y toda su historia, escaneada antes de salir. Nada del repo depende del espacio de trabajo: los proyectos se
+encuentran por el manifiesto o al lado, y los studios del autor (privados) son proveedores opcionales. El README va en
+español con una sección en inglés para quien llegue de fuera. En el mismo encargo: varias pantallas (la rueda en la del
+puntero, que elige KWin; una franja por pantalla en su borde libre), visto por el autor con dos monitores.
+

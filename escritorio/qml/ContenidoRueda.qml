@@ -45,6 +45,17 @@ FocusScope {
 
     focus: true
 
+    // solo en las capturas del README (MUYU_FONDO): un fondo suave detrás, con los colores del tema
+    Rectangle {
+        anchors.fill: parent
+        visible: fondoCaptura
+        z: -1
+        gradient: Gradient {
+            GradientStop { position: 0; color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.35)) }
+            GradientStop { position: 1; color: Qt.darker(Kirigami.Theme.backgroundColor, 1.25) }
+        }
+    }
+
     // --- al mostrarse: bajo el puntero, si llega pronto (Wayland manda la posición al aparecer)
     function preparar() {
         colocada = false
@@ -508,7 +519,7 @@ FocusScope {
         color: Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.94)
         border.color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.12)
         opacity: rueda_.opacity
-        visible: !raiz.ampliado
+        visible: raiz.panel === null                     // con el panel abierto, el panel dice lo mismo (y no se tapan)
         ColumnLayout {
             id: columna
             anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
@@ -536,7 +547,8 @@ FocusScope {
                     : rueda.estado === "vacia" ? "Arrastra aquí un archivo desde Dolphin, Krusader o el escritorio, o un enlace desde el navegador (o pégalo con Ctrl+V), y suéltalo sobre lo que quieras hacer."
                     : rueda.estado === "hecha" ? "Arrástralo desde el centro a donde quieras, o sigue: los anillos ya son para el resultado."
                     : rueda.estado === "lista" ? (rueda.mensaje || ((rueda.predeterminada ? "Intro abre con " + rueda.predeterminada + ". " : "")
-                                                 + "Afuera: abrir con otra aplicación. Interior: convertir. Exterior: herramientas. Clic derecho: con opciones."))
+                                                 + (rueda.apps.length ? "Afuera: abrir con otra aplicación. " : "")
+                                                 + "Interior: " + (rueda.sonEnlaces ? "la calidad" : "convertir") + ". Exterior: herramientas. Clic derecho: con opciones."))
                     : rueda.mensaje
                 visible: text !== ""
             }
