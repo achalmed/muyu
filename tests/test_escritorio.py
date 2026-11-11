@@ -268,3 +268,33 @@ def test_lo_que_muyu_lanza_no_hereda_su_capa(app, tmp_path, monkeypatch):
     finally:                                            # el entorno de pytest, entero (GUI_COMUN_DIR lo usan las demás)
         os.environ.clear()
         os.environ.update(antes)
+
+
+@requiere_binding
+def test_la_franja_va_en_el_borde_que_no_toca_otro_monitor(app):
+    """pantallas.js de verdad (QJSEngine) con pantallas de mentira: una sola, dos lado a lado (las del autor: HDMI a la
+    izquierda y el portátil a la derecha), tres en fila."""
+    from PySide6.QtQml import QJSEngine
+    codigo = (Path(__file__).resolve().parents[1] / "escritorio" / "qml" / "pantallas.js").read_text(encoding="utf-8")
+    motor = QJSEngine()
+    motor.evaluate(codigo.replace(".pragma library", ""))
+    lado = motor.globalObject().property("lado")
+
+    def pantallas(*xs):
+        return [{"name": f"P{i}", "geometry": {"x": x, "y": 0, "width": 1920, "height": 1080}} for i, x in enumerate(xs)]
+
+    def ladoDe(i, todas):
+        return lado.call([motor.toScriptValue(todas[i]), motor.toScriptValue(todas)]).toString()
+    una = pantallas(0)
+    assert ladoDe(0, una) == "derecha"
+    dos = pantallas(0, 1920)
+    assert (ladoDe(0, dos), ladoDe(1, dos)) == ("izquierda", "derecha")
+    tres = pantallas(0, 1920, 3840)
+    assert [ladoDe(i, tres) for i in range(3)] == ["izquierda", "arriba", "derecha"]
+
+
+def test_la_rueda_deja_elegir_la_pantalla_a_kwin():
+    """La rueda no se fija a la pantalla principal (la elige KWin: la del puntero) y cada franja lleva su QScreen."""
+    qml = (Path(__file__).resolve().parents[1] / "escritorio" / "qml" / "SuperposicionCapa.qml").read_text(encoding="utf-8")
+    assert "LayerShell.Window.wantsToBeOnActiveScreen: true" in qml
+    assert "LayerShell.Window.screen: modelData" in qml and "model: residente ? pantallasQt : []" in qml

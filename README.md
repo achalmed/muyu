@@ -4,6 +4,36 @@ estado: activo
 ---
 # muyu/ — Muyu, la rueda universal del escritorio: abrir con, convertir y las herramientas de tus programas
 
+<!-- suite:inicio -->
+**Suite `muyu`** · objetivo *sistema* · estado *activo* · python · interfaz gui
+
+La rueda universal del escritorio: abrir con, convertir y las herramientas de Raphi, de los studios y del sistema sobre cualquier archivo, carpeta o enlace.
+
+- Escribe en: archivos · simula por defecto: no
+- Depende de: python3-pyside6 (sistema) con Kirigami y layer-shell-qt, gui-comun, raphi (su corredor y su .venv)
+
+Comandos:
+
+```bash
+main.py [archivos o enlaces]
+run.sh --residente
+run.sh --instalar --residente --predeterminada -n
+run.sh --quitar
+```
+
+<sub>Bloque generado desde `suite.yml` por `core/suites.py generar` (2026-11-11); no se edita a mano.</sub>
+<!-- suite:fin -->
+
+<!-- suites:inicio -->
+Suites de esta carpeta (1); índice global en `meta/INDICE_SCRIPTS.md`. Patrón: M main · C config · L lib.
+
+| Suite | Carpeta | Objetivo | Escribe en | Simula | Timer | Estado | Patrón |
+|---|---|---|---|---|---|---|---|
+| `muyu` | [muyu](./) | sistema | archivos | no |  | activo | `M··` |
+
+<sub>Bloque generado desde los `suite.yml` por `core/suites.py generar` (2026-11-11); no se edita a mano.</sub>
+<!-- suites:fin -->
+
 ## Qué es
 
 **Muyu** («círculo, giro» en quechua) es la rueda universal del escritorio: suelta un archivo, una carpeta o un enlace

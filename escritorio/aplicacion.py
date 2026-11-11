@@ -134,6 +134,22 @@ def main(argv: list[str]) -> int:
             if v is not None:
                 v.setMask(QRegion(x, y, ancho, alto, QRegion.RegionType.Ellipse))
 
+        @Slot(str, result="QVariantList")
+        def geometria(self, nombre: str) -> list:  # noqa: N802
+            """[x, y, ancho, alto] de la pantalla de ese nombre (X11: dónde poner la ventana a pantalla completa)."""
+            from PySide6.QtGui import QGuiApplication
+            p = next((x for x in QGuiApplication.screens() if x.name() == nombre), None)
+            g = p.geometry() if p else None
+            return [g.x(), g.y(), g.width(), g.height()] if g else []
+
+        @Slot(result=int)
+        def pantallaDelPuntero(self) -> int:  # noqa: N802
+            """El índice (en Qt.application.screens) de la pantalla del puntero; en Wayland Qt no lo sabe fuera de sus
+            ventanas y la elige KWin (ScreenFromCompositor); -1 si no se sabe."""
+            from PySide6.QtGui import QCursor, QGuiApplication
+            pantalla = QGuiApplication.screenAt(QCursor.pos())
+            return QGuiApplication.screens().index(pantalla) if pantalla in QGuiApplication.screens() else -1
+
         @Slot()
         def todaLaPantalla(self) -> None:  # noqa: N802
             v = app.ventana()
@@ -159,6 +175,16 @@ def main(argv: list[str]) -> int:
     app.exponer("tareasRueda", tareas)
     app.motor.rootContext().setContextProperty("residente", residente)
     app.motor.rootContext().setContextProperty("conCapa", capa)
+    app.motor.rootContext().setContextProperty("depurar", bool(os.environ.get("MUYU_DEPURAR")))
+
+    # las pantallas de verdad (QScreen) para QML: layer-shell las necesita así (Qt.application.screens son envoltorios
+    # que no llegan a su propiedad `screen`); se rehacen al conectar o desconectar un monitor
+    def poner_pantallas(*_):
+        from PySide6.QtGui import QGuiApplication
+        app.motor.rootContext().setContextProperty("pantallasQt", list(QGuiApplication.screens()))
+    poner_pantallas()
+    app.app.screenAdded.connect(poner_pantallas)
+    app.app.screenRemoved.connect(poner_pantallas)
     app.motor.rootContext().setContextProperty("inicialVisible", not residente or bool(archivos))
     app.motor.rootContext().setContextProperty("pruebaPanel", os.environ.get("MUYU_PANEL", "") if captura or humo else "")
 
