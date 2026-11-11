@@ -123,9 +123,25 @@ def _aviso(texto):
     kit.createMessageBox(marco.getContainerWindow() if marco else None, INFOBOX, 1, "Muyu", texto).execute()
 
 
-def muyu(*_):
+def _documento():
+    """El documento de la macro; si no hay uno activo (lanzada desde el editor de macros u oculto), el componente
+    actual o el primero abierto que tenga archivo."""
     documento = XSCRIPTCONTEXT.getDocument()  # noqa: F821
-    url = documento.getURL() if documento is not None else ""
+    escritorio = XSCRIPTCONTEXT.getDesktop()  # noqa: F821
+    if documento is None or not hasattr(documento, "getURL"):
+        documento = escritorio.getCurrentComponent()
+    if documento is None or not hasattr(documento, "getURL") or not documento.getURL():
+        componentes = escritorio.getComponents().createEnumeration()
+        while componentes.hasMoreElements():
+            c = componentes.nextElement()
+            if hasattr(c, "getURL") and c.getURL():
+                return c
+    return documento
+
+
+def muyu(*_):
+    documento = _documento()
+    url = documento.getURL() if documento is not None and hasattr(documento, "getURL") else ""
     if not url:
         _aviso("Guarde el documento primero: Muyu trabaja con el archivo guardado.")
         return
