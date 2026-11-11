@@ -1,0 +1,21 @@
+# suite.yml — suite muyu: la rueda universal del escritorio (abrir con, convertir, herramientas de los studios y del sistema).
+# Contrato: core/suite.schema.yml; core/suites.py validar lo comprueba y generar escribe los índices y README.
+id: muyu
+version: 0.1.0
+objetivo: sistema
+resumen: 'La rueda universal del escritorio: abrir con, convertir y las herramientas de Raphi, de los studios y del sistema sobre cualquier archivo, carpeta o enlace.'
+escribe_en:
+- archivos
+simula_por_defecto: false
+pruebas: tests/run.sh
+comandos:
+- main.py [archivos o enlaces]   # la rueda, con el Python del sistema (o run.sh)
+- run.sh --residente
+- run.sh --instalar --residente --predeterminada -n
+- run.sh --quitar
+estado: activo
+interfaz: gui
+depende_de:
+- python3-pyside6 (sistema) con Kirigami y layer-shell-qt
+- gui-comun
+- raphi (su corredor y su .venv)
