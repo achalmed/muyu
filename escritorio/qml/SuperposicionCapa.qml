@@ -61,7 +61,7 @@ Window {
                                      : lado === "izquierda" ? LayerShell.Window.AnchorLeft : LayerShell.Window.AnchorTop
             LayerShell.Window.exclusionZone: -1
             LayerShell.Window.keyboardInteractivity: LayerShell.Window.KeyboardInteractivityNone
-            Borde { anchors.fill: parent; lado: parent.lado; onLlega: ventana.mostrarRueda() }
+            Borde { anchors.fill: parent; lado: franja.lado; onLlega: ventana.mostrarRueda() }
             // primero la pantalla, después visible: si no, la capa se crea en la pantalla por omisión
             Component.onCompleted: if (depurar) console.log("muyu: franja en " + modelData.name + " (" + lado + ")")
         }

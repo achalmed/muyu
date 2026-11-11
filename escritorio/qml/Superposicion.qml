@@ -58,7 +58,7 @@ Window {
             x: modelData.geometry.x + (lado === "derecha" ? modelData.geometry.width - width : lado === "izquierda" ? 0 : (modelData.geometry.width - width) / 2)
             y: modelData.geometry.y + (vertical ? (modelData.geometry.height - height) / 2 : 0)
             visible: true
-            Borde { anchors.fill: parent; lado: parent.lado; onLlega: ventana.mostrarRueda() }
+            Borde { anchors.fill: parent; lado: franja.lado; onLlega: ventana.mostrarRueda() }
             Component.onCompleted: if (depurar) console.log("muyu: franja en " + modelData.name + " (" + lado + ")")
         }
     }
